@@ -1,18 +1,21 @@
+import Outcome.Companion.translateOutcome
+import Roshambo.Companion.translateHandGesture
+
 fun main() {
   fun getTokens(input: List<String>) =
     input.map { line -> line.split(' ') }
       .filter { tokens -> tokens.size == 2 }
-      .map { tokens -> Pair(tokens[0], tokens[1])}
+      .map { tokens -> tokens[0] to tokens[1] }
 
   fun part1(input: List<String>): Int =
     getTokens(input)
-      .map { (token1, token2) -> Pair(RPS.getRPS(token1), RPS.getRPS(token2)) }
+      .map { (token1, token2) -> translateHandGesture(token1) to translateHandGesture(token2) }
       .sumOf { (fighter1, fighter2) -> score(fighter1, fighter2) }
 
   fun part2(input: List<String>): Int =
     getTokens(input)
-      .map { (token1, token2) -> Pair(RPS.getRPS(token1), WLT.getWLT(token2)) }
-      .map { (fighter, result) -> Pair(fighter, fighter.findRPS(result)) }
+      .map { (token1, token2) -> translateHandGesture(token1) to translateOutcome(token2) }
+      .map { (fighter1, result) -> fighter1 to fighter1.whichHandGesture(result) }
       .sumOf { (fighter1, fighter2) -> score(fighter1, fighter2) }
 
 // test if implementation meets criteria from the description, like:
@@ -27,58 +30,58 @@ fun main() {
   println(part2(input))
 }
 
-enum class RPS(val points: Int, val codeList: List<String>) {
+enum class Roshambo(val points: Int, val codeList: List<String>) {
   ROCK(1, listOf("A", "X")) {
-    override fun fight(fighter: RPS): WLT =
+    override fun fight(fighter: Roshambo): Outcome =
       when (fighter) {
-        ROCK -> WLT.TIE
-        PAPER -> WLT.LOSS
-        SCISSORS -> WLT.WIN
+        ROCK -> Outcome.TIE
+        PAPER -> Outcome.LOSS
+        SCISSORS -> Outcome.WIN
       }
 
-    override fun findRPS(result: WLT): RPS =
+    override fun whichHandGesture(result: Outcome): Roshambo =
       when (result) {
-        WLT.WIN -> PAPER
-        WLT.TIE -> ROCK
-        WLT.LOSS -> SCISSORS
+        Outcome.WIN -> PAPER
+        Outcome.TIE -> ROCK
+        Outcome.LOSS -> SCISSORS
       }
   },
   PAPER(2, listOf("B", "Y")) {
-    override fun fight(fighter: RPS): WLT =
+    override fun fight(fighter: Roshambo): Outcome =
       when (fighter) {
-        ROCK -> WLT.WIN
-        PAPER -> WLT.TIE
-        SCISSORS -> WLT.LOSS
+        ROCK -> Outcome.WIN
+        PAPER -> Outcome.TIE
+        SCISSORS -> Outcome.LOSS
       }
 
-    override fun findRPS(result: WLT): RPS =
+    override fun whichHandGesture(result: Outcome): Roshambo =
       when (result) {
-        WLT.WIN -> SCISSORS
-        WLT.TIE -> PAPER
-        WLT.LOSS -> ROCK
+        Outcome.WIN -> SCISSORS
+        Outcome.TIE -> PAPER
+        Outcome.LOSS -> ROCK
       }
   },
   SCISSORS(3, listOf("C", "Z")) {
-    override fun fight(fighter: RPS): WLT =
+    override fun fight(fighter: Roshambo): Outcome =
       when (fighter) {
-        ROCK -> WLT.LOSS
-        PAPER -> WLT.WIN
-        SCISSORS -> WLT.TIE
+        ROCK -> Outcome.LOSS
+        PAPER -> Outcome.WIN
+        SCISSORS -> Outcome.TIE
       }
 
-    override fun findRPS(result: WLT): RPS =
+    override fun whichHandGesture(result: Outcome): Roshambo =
       when (result) {
-        WLT.WIN -> ROCK
-        WLT.TIE -> SCISSORS
-        WLT.LOSS -> PAPER
+        Outcome.WIN -> ROCK
+        Outcome.TIE -> SCISSORS
+        Outcome.LOSS -> PAPER
       }
   };
 
-  abstract fun fight(fighter: RPS): WLT
-  abstract fun findRPS(result: WLT): RPS
+  abstract fun fight(fighter: Roshambo): Outcome
+  abstract fun whichHandGesture(result: Outcome): Roshambo
 
   companion object {
-    fun getRPS(input: String): RPS =
+    fun translateHandGesture(input: String): Roshambo =
       when {
         (input in ROCK.codeList) -> ROCK
         (input in PAPER.codeList) -> PAPER
@@ -87,13 +90,13 @@ enum class RPS(val points: Int, val codeList: List<String>) {
   }
 }
 
-enum class WLT(val points: Int, val code: String) {
+enum class Outcome(val points: Int, val code: String) {
   WIN(6, "Z"),
   LOSS(0, "X"),
   TIE(3, "Y");
 
   companion object {
-    fun getWLT(input: String): WLT =
+    fun translateOutcome(input: String): Outcome =
       when (input) {
         WIN.code -> WIN
         LOSS.code -> LOSS
@@ -102,4 +105,4 @@ enum class WLT(val points: Int, val code: String) {
   }
 }
 
-fun score(fighter1: RPS, fighter2: RPS): Int = fighter2.points + (fighter2.fight(fighter1)).points
+fun score(fighter1: Roshambo, fighter2: Roshambo): Int = fighter2.points + (fighter2.fight(fighter1)).points
