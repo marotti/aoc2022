@@ -1,15 +1,15 @@
-fun main() {
-  fun getListOfCalories(input: List<String>): List<Int> =
-    input.fold(mutableListOf(0)) { acc, s ->
-      if (s.isEmpty()) {
-        acc.add(0)
-        acc
-      } else {
-        acc[acc.lastIndex] += s.toInt()
-        acc
-      }
-    }.toList()
+fun getListOfCalories(input: List<String>): List<Int> =
+  input.fold(mutableListOf(0)) { acc, s ->
+    if (s.isEmpty()) {
+      acc.plus(0)
+      acc
+    } else {
+      acc[acc.lastIndex] += s.toInt()
+      acc
+    }
+  }.toList()
 
+fun main() {
   fun part1(input: List<String>): Int =
     getListOfCalories(input).maxOrNull()!!
 
