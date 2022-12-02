@@ -23,8 +23,8 @@ fun main() {
   check(part2(testInput) == 12)
 
   val input = readInput("Day02")
-  println(part1(input)) //12794
-  println(part2(input)) //14979
+  println(part1(input))
+  println(part2(input))
 }
 
 enum class RPS(val points: Int, val codeList: List<String>) {
