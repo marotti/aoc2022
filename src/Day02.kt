@@ -1,65 +1,21 @@
-// This is garbage and I'm embarrassed. Will fix tomorrow when I'm awake.
-const val ROCK=1
-const val PAPER=2
-const val SCISSORS=3
-const val WIN=6
-const val TIE=3
-const val LOSE=0
-
 fun main() {
+  fun getTokens(input: List<String>) =
+    input.map { line -> line.split(' ') }
+      .filter { tokens -> tokens.size == 2 }
+      .map { tokens -> Pair(tokens[0], tokens[1])}
+
   fun part1(input: List<String>): Int =
-    input.sumOf { fight ->
-      val fighters = fight.split(' ')
-      when (fighters[0]) {
-        "A" -> when (fighters[1]) {
-          "X" -> TIE + ROCK
-          "Y" -> WIN + PAPER
-          "Z" -> LOSE + SCISSORS
-          else -> LOSE
-        }
-        "B" -> when (fighters[1]) {
-          "X" -> LOSE + ROCK
-          "Y" -> TIE + PAPER
-          "Z" -> WIN + SCISSORS
-          else -> LOSE
-        }
-        "C" -> when (fighters[1]) {
-          "X" -> WIN + ROCK
-          "Y" -> LOSE + PAPER
-          "Z" -> TIE + SCISSORS
-          else -> LOSE
-        }
-        else -> LOSE
-      }
-    }
+    getTokens(input)
+      .map { (token1, token2) -> Pair(RPS.getRPS(token1), RPS.getRPS(token2)) }
+      .sumOf { (fighter1, fighter2) -> score(fighter1, fighter2) }
 
   fun part2(input: List<String>): Int =
-    part1(input.map { fight ->
-      val fighters = fight.split(' ')
-      when (fighters[0]) {
-        "A" -> when (fighters[1]) {
-          "X" -> "A Z"
-          "Y" -> "A X"
-          "Z" -> "A Y"
-          else -> "A"
-        }
-        "B" -> when (fighters[1]) {
-          "X" -> "B X"
-          "Y" -> "B Y"
-          "Z" -> "B Z"
-          else -> "A"
-        }
-        "C" -> when (fighters[1]) {
-          "X" -> "C Y"
-          "Y" -> "C Z"
-          "Z" -> "C X"
-          else -> "A"
-        }
-        else -> "A"
-      }
-    })
+    getTokens(input)
+      .map { (token1, token2) -> Pair(RPS.getRPS(token1), WLT.getWLT(token2)) }
+      .map { (fighter, result) -> Pair(fighter, fighter.findRPS(result)) }
+      .sumOf { (fighter1, fighter2) -> score(fighter1, fighter2) }
 
-  // test if implementation meets criteria from the description, like:
+// test if implementation meets criteria from the description, like:
   val testInput = readInput("Day02_test")
   println(part1(testInput))
   check(part1(testInput) == 15)
@@ -67,6 +23,83 @@ fun main() {
   check(part2(testInput) == 12)
 
   val input = readInput("Day02")
-  println(part1(input))
-  println(part2(input))
+  println(part1(input)) //12794
+  println(part2(input)) //14979
 }
+
+enum class RPS(val points: Int, val codeList: List<String>) {
+  ROCK(1, listOf("A", "X")) {
+    override fun fight(fighter: RPS): WLT =
+      when (fighter) {
+        ROCK -> WLT.TIE
+        PAPER -> WLT.LOSS
+        SCISSORS -> WLT.WIN
+      }
+
+    override fun findRPS(result: WLT): RPS =
+      when (result) {
+        WLT.WIN -> PAPER
+        WLT.TIE -> ROCK
+        WLT.LOSS -> SCISSORS
+      }
+  },
+  PAPER(2, listOf("B", "Y")) {
+    override fun fight(fighter: RPS): WLT =
+      when (fighter) {
+        ROCK -> WLT.WIN
+        PAPER -> WLT.TIE
+        SCISSORS -> WLT.LOSS
+      }
+
+    override fun findRPS(result: WLT): RPS =
+      when (result) {
+        WLT.WIN -> SCISSORS
+        WLT.TIE -> PAPER
+        WLT.LOSS -> ROCK
+      }
+  },
+  SCISSORS(3, listOf("C", "Z")) {
+    override fun fight(fighter: RPS): WLT =
+      when (fighter) {
+        ROCK -> WLT.LOSS
+        PAPER -> WLT.WIN
+        SCISSORS -> WLT.TIE
+      }
+
+    override fun findRPS(result: WLT): RPS =
+      when (result) {
+        WLT.WIN -> ROCK
+        WLT.TIE -> SCISSORS
+        WLT.LOSS -> PAPER
+      }
+  };
+
+  abstract fun fight(fighter: RPS): WLT
+  abstract fun findRPS(result: WLT): RPS
+
+  companion object {
+    fun getRPS(input: String): RPS =
+      when {
+        (input in ROCK.codeList) -> ROCK
+        (input in PAPER.codeList) -> PAPER
+        else -> SCISSORS
+      }
+  }
+}
+
+enum class WLT(val points: Int, val code: String) {
+  WIN(6, "Z"),
+  LOSS(0, "X"),
+  TIE(3, "Y");
+
+  companion object {
+    fun getWLT(input: String): WLT =
+      when (input) {
+        WIN.code -> WIN
+        LOSS.code -> LOSS
+        else -> TIE
+      }
+  }
+}
+
+fun score(fighter1: RPS, fighter2: RPS): Int = fighter2.points + (fighter2.fight(fighter1)).points
