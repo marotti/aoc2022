@@ -1,22 +1,26 @@
-fun Char.getCharValue(): Int {
-  val charList = ('a'..'z').toMutableList() + ('A'..'Z').toMutableList()
-  return charList.indexOf(this) + 1
+val charList = ('a'..'z').toMutableList() + ('A'..'Z').toMutableList()
+
+fun Char.getAlphabetValue(): Int = charList.indexOf(this) + 1
+fun String.findCommonChar(string: String): Char = findCommonChar(setOf(string))
+fun String.findCommonChar(stringSet: Set<String>): Char = this.first { check -> stringSet.all { check in it } }
+fun getItemSet(rucksackList: List<Rucksack>): Set<String> = rucksackList.map { it.items }.toSet()
+
+data class Rucksack(val items: String) {
+  val compartment1 = items.substring(0, items.length / 2)
+  val compartment2 = items.substring(items.length / 2)
 }
-
-fun String.findCommonChar(vararg stringList: String): Char =
-  this.first { check -> stringList.all { check in it } }
-
 
 fun main() {
   fun part1(input: List<String>): Int =
     input
-      .map { it.chunked(it.length / 2) }
-      .sumOf { (compartment1, compartment2) -> compartment1.findCommonChar(compartment2).getCharValue() }
+      .map { Rucksack(it) }
+      .sumOf { rucksack -> rucksack.compartment1.findCommonChar(rucksack.compartment2).getAlphabetValue() }
 
   fun part2(input: List<String>): Int =
     input
+      .map { Rucksack(it) }
       .chunked(3)
-      .sumOf { group -> group.first().findCommonChar(*group.toTypedArray()).getCharValue() }
+      .sumOf { elves -> elves.first().items.findCommonChar(getItemSet(elves)).getAlphabetValue() }
 
   // test if implementation meets criteria from the description, like:
   val testInput = readInput("Day03_test")
