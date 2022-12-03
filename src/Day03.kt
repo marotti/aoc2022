@@ -5,13 +5,14 @@ fun Char.getCharValue(): Int {
 
 fun main() {
   fun part1(input: List<String>): Int =
-    input.map { line -> line.substring(0, line.length / 2) to line.substring(line.length / 2) }
-      .map { (compartment1, compartment2) -> compartment1.toList().first { it in compartment2 } }
-      .sumOf { it.getCharValue() }
+    input
+      .map { it.chunked(it.length / 2) }
+      .sumOf { (compartment1, compartment2) -> compartment1.toList().first { it in compartment2 }.getCharValue() }
 
   fun part2(input: List<String>): Int =
-    input.chunked(3).map { threeLines -> threeLines[0].toList().first { it in threeLines[1] && it in threeLines[2] } }
-      .sumOf { it.getCharValue() }
+    input
+      .chunked(3)
+      .sumOf { group -> group.first().first { check -> group.all { check in it } }.getCharValue() }
 
   // test if implementation meets criteria from the description, like:
   val testInput = readInput("Day03_test")
