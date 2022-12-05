@@ -3,7 +3,8 @@ fun getStackNumbers(input: List<String>): List<List<Char>> =
     .asSequence()
     .filter { it.contains('[') }
     .map { line -> line.chunked(4).mapIndexed { index, char -> index to char[1] } }
-    .map { it.filter { charPair -> charPair.second.isLetter() } }.flatten()
+    .map { it.filter { charPair -> charPair.second.isLetter() } }
+    .flatten()
     .groupBy { it.first }
     .map { it.key to it.value.map { pair -> pair.second } }
     .sortedBy { it.first }
@@ -11,10 +12,13 @@ fun getStackNumbers(input: List<String>): List<List<Char>> =
 
 val moveRegex = """move (\d+) from (\d+) to (\d+)""".toRegex()
 fun getMoves(input: List<String>): List<Move> =
-  input.filter { it.contains("move") }.map { moveRegex.find(it) }.map {
-    val (amount, from, into) = it!!.destructured
-    Move(amount.toInt(), into.toInt() - 1, from.toInt() - 1)
-  }
+  input
+    .filter { it.contains("move") }
+    .map { moveRegex.find(it) }
+    .map {
+      val (amount, from, into) = it!!.destructured
+      Move(amount.toInt(), into.toInt() - 1, from.toInt() - 1)
+    }
 
 data class Move(val amount: Int, val into: Int, val from: Int)
 
@@ -26,7 +30,8 @@ fun main() {
         acc[move.from] = acc[move.from].dropLast(move.amount)
         acc
       }
-      .map { it.last() }.joinToString("")
+      .map { it.last() }
+      .joinToString("")
 
   fun part2(input: List<String>): String =
     getMoves(input)
@@ -35,7 +40,8 @@ fun main() {
         acc[move.from] = acc[move.from].dropLast(move.amount)
         acc
       }
-      .map { it.last() }.joinToString("")
+      .map { it.last() }
+      .joinToString("")
 
   // test if implementation meets criteria from the description, like:
   val testInput = readInput("Day05_test")
