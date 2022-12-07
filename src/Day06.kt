@@ -1,18 +1,11 @@
-fun String.countOccurrenceOfEachChar(): Int =
-  this.fold(0) { acc, c -> acc + this.count { it == c } }
-
-fun String.getIndexOfNonrepeat(chunk: Int): List<Int> =
-  this.mapIndexed { index, _ ->
-    this.substring(index, minOf(index + chunk, this.length)).countOccurrenceOfEachChar()
-  }
+fun String.getIndexOfNonrepeat(chunk: Int): Int = this.windowed(chunk).indexOfFirst { it.toSet().count() == it.count() }
 
 fun main() {
   fun part1(input: List<String>): Int =
-    input.first().getIndexOfNonrepeat(4).indexOf(4) + 4
-
+    input.first().getIndexOfNonrepeat(4) + 4
 
   fun part2(input: List<String>): Int =
-    input.first().getIndexOfNonrepeat(14).indexOf(14) + 14
+    input.first().getIndexOfNonrepeat(14) + 14
 
 // test if implementation meets criteria from the description, like:
   val testInput = readInput("Day06_test")
