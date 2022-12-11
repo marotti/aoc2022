@@ -7,10 +7,12 @@ fun main() {
 
   // test if implementation meets criteria from the description, like:
   val testInput = readInput("DayX_test")
-  println(part1(testInput))
-  check(part1(testInput) == 7)
-  println(part2(testInput))
-  check(part2(testInput) == 5)
+  val output1 = part1(testInput)
+  println(output1)
+  check(output1 == 7)
+  val output2 = part2(testInput)
+  println(output2)
+  check(output2 == 5)
 
   val input = readInput("DayX")
   println(part1(input))
