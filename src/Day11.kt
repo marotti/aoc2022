@@ -62,7 +62,6 @@ fun main() {
         monkey.items.clear()
       }
     }
-    monkeys.forEach { println("${it.num}: ${it.itemsInspected}") }
     return monkeys.sortedBy { it.itemsInspected }.takeLast(2)
       .fold(1.toLong()) { acc, monkey -> acc * monkey.itemsInspected }
   }
