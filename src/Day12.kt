@@ -1,10 +1,14 @@
+import java.util.LinkedList
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
+
 fun buildDoubleArray(input: List<String>): List<List<Char>> =
   input.map { line -> line.map { char -> char } }
 
 fun findPoint(char: Char, map: List<List<Char>>): Node {
   for (y in map.indices) {
     for (x in map[y].indices) {
-      if (map[y][x] == char) return Node(x to y)
+      if (map[y][x] == char) return Node(x to y, char)
     }
   }
   throw Exception()
@@ -14,7 +18,7 @@ fun findAllPoints(char: Char, map: List<List<Char>>): List<Node> {
   val nodes = mutableListOf<Node>()
   for (y in map.indices) {
     for (x in map[y].indices) {
-      if (map[y][x] == char) nodes.add(Node(x to y))
+      if (map[y][x] == char) nodes.add(Node(x to y, char))
     }
   }
   return nodes.toList()
@@ -27,66 +31,96 @@ fun Char.weight(): Int =
     else -> this.code
   }
 
-fun buildEdges(map: List<List<Char>>): List<Edge> {
-  val edges = mutableListOf<Edge>()
+data class Node(val location: Pair<Int, Int>, val data: Char) {
+  var weight = 1
+  var distance = Int.MAX_VALUE
+}
+
+class Graph {
+  val adjacencyMap: HashMap<Node, HashSet<Node>> = HashMap()
+
+  fun addEdge(sourceVertex: Node, destinationVertex: Node) {
+    adjacencyMap
+      .computeIfAbsent(sourceVertex) { HashSet() }
+      .add(destinationVertex)
+  }
+}
+
+fun buildGraph(map: List<List<Char>>): Graph {
+  val graph = Graph()
   for (y in map.indices) {
     for (x in map[y].indices) {
-      if ((y != 0) && (map[y - 1][x].weight()) <= map[y][x].weight() + 1) edges.add(
-        Edge(
-          Node(x to y),
-          Node(x to y - 1),
-          map[y - 1][x].weight()
-        )
+      if ((y != 0) && (map[y-1][x].weight() - map[y][x].weight() <= 1)) graph.addEdge(
+        Node(x to y, map[y][x]),
+        Node(x to y - 1, map[y-1][x])
       )
-      if ((x != 0) && (map[y][x - 1].weight() <= map[y][x].weight() + 1)) edges.add(
-        Edge(
-          Node(x to y),
-          Node(x - 1 to y),
-          map[y][x - 1].weight()
-        )
+      if ((x != 0) && (map[y][x-1].weight() - map[y][x].weight() <= 1)) graph.addEdge(
+        Node(x to y, map[y][x]),
+        Node(x - 1 to y, map[y][x-1])
       )
-      if ((y != map.size - 1) && (map[y + 1][x].weight()) <= map[y][x].weight() + 1) edges.add(
-        Edge(
-          Node(x to y),
-          Node(x to y + 1),
-          map[y + 1][x].weight()
-        )
+      if ((y != map.size - 1) && (map[y + 1][x].weight() - map[y][x].weight() <= 1)) graph.addEdge(
+        Node(x to y, map[y][x]),
+        Node(x to y + 1, map[y+1][x])
       )
-      if ((x != map[y].size - 1) && (map[y][x + 1].weight() <= map[y][x].weight() + 1)) edges.add(
-        Edge(
-          Node(x to y),
-          Node(x + 1 to y),
-          map[y][x + 1].weight()
-        )
+      if ((x != map[y].size - 1) && (map[y][x + 1].weight() - map[y][x].weight() <= 1)) graph.addEdge(
+        Node(x to y, map[y][x]),
+        Node(x + 1 to y, map[y][x+1])
       )
     }
   }
-  return edges.toList()
+  return graph
 }
 
+fun breadthFirstSearchDistance(
+  graph: Graph,
+  start: Node, end: Node
+): Int {
+  val queue = LinkedList<Node>()
+  val visited = HashSet<Node>()
+
+  visited.add(start)
+  start.distance=0
+  queue.add(start)
+
+  while (queue.isNotEmpty()) {
+    val point = queue.remove()
+    for (node in graph.adjacencyMap[point] ?: emptyList()) {
+      if (!visited.contains(node)) {
+        visited.add(node)
+        node.distance = point.distance+node.weight
+        queue.add(node)
+        if (node == end) return node.distance
+      }
+    }
+  }
+  return Int.MAX_VALUE
+}
 
 fun main() {
   fun part1(input: List<String>): Int {
     val doubleArray = buildDoubleArray(input)
-    return findShortestPath(
-      buildEdges(doubleArray),
-      findPoint('S', doubleArray),
-      findPoint('E', doubleArray)
-    ).shortestPath().size - 1
+    val graph = buildGraph(doubleArray)
+    val startPoint = findPoint('S', doubleArray)
+    val endPoint = findPoint('E', doubleArray)
+    return breadthFirstSearchDistance(
+      graph,
+      startPoint,
+      endPoint
+    )
   }
 
   fun part2(input: List<String>): Int {
     val doubleArray = buildDoubleArray(input)
+    val graph = buildGraph(doubleArray)
     val startingPoints = listOf(findPoint('S', doubleArray)) + findAllPoints('a', doubleArray)
-    val edges = buildEdges(doubleArray)
     val endPoint = findPoint('E', doubleArray)
     return startingPoints.map {
-      findShortestPath(
-        edges,
+      breadthFirstSearchDistance(
+        graph,
         it,
         endPoint
       )
-    }.map { it.shortestPath().size - 1 }.minOf { it }
+    }.minOf { it }
   }
 
   // test if implementation meets criteria from the description, like:
@@ -103,67 +137,3 @@ fun main() {
   println(part2(input))
 }
 
-data class Node(val location: Pair<Int, Int>)
-
-data class Edge(val node1: Node, val node2: Node, val distance: Int)
-
-fun findShortestPath(edges: List<Edge>, source: Node, target: Node): ShortestPathResult {
-  val dist = mutableMapOf<Node, Int>()
-  val prev = mutableMapOf<Node, Node?>()
-  val q = findDistinctNodes(edges)
-
-  q.forEach { v ->
-    dist[v] = Integer.MAX_VALUE
-    prev[v] = null
-  }
-  dist[source] = 0
-
-  while (q.isNotEmpty()) {
-    val u = q.minByOrNull { dist[it] ?: 0 }
-    q.remove(u)
-
-    if (u == target) {
-      break // Found shortest path to target
-    }
-    edges
-      .filter { it.node1 == u }
-      .forEach { edge ->
-        val v = edge.node2
-        val alt = (dist[u] ?: 0) + edge.distance
-        if (alt < (dist[v] ?: 0)) {
-          dist[v] = alt
-          prev[v] = u
-        }
-      }
-  }
-
-  return ShortestPathResult(prev, dist, source, target)
-}
-
-private fun findDistinctNodes(edges: List<Edge>): MutableSet<Node> {
-  val nodes = mutableSetOf<Node>()
-  edges.forEach {
-    nodes.add(it.node1)
-    nodes.add(it.node2)
-  }
-  return nodes
-}
-
-class ShortestPathResult(val prev: Map<Node, Node?>, val dist: Map<Node, Int>, val source: Node, val target: Node) {
-  fun shortestPath(from: Node = source, to: Node = target, list: List<Node> = emptyList()): List<Node> {
-    val last = prev[to] ?: return if (from == to) {
-      list + to
-    } else {
-      emptyList()
-    }
-    return shortestPath(from, last, list) + to
-  }
-
-  fun shortestDistance(): Int? {
-    val shortest = dist[target]
-    if (shortest == Integer.MAX_VALUE) {
-      return null
-    }
-    return shortest
-  }
-}
