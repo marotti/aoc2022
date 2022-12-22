@@ -1,18 +1,5 @@
 val SAND_ENTRY = Point(500, 0)
 
-data class Point(val x: Int, val y: Int) {
-  fun drawStraightLineTo(that: Point): Set<Point> =
-    (minOf(this.x, that.x)..maxOf(this.x, that.x)).map { newX ->
-      (minOf(this.y, that.y)..maxOf(this.y, that.y)).map { newY ->
-        Point(newX, newY)
-      }
-    }.flatten().toSet()
-
-  override fun toString(): String {
-    return "($x,$y)"
-  }
-}
-
 data class Chamber(val rocks: Set<Point>) {
   val sand = mutableSetOf<Point>()
 
@@ -60,7 +47,7 @@ fun parseRock(input: List<String>): Set<Point> =
       .map { pointRegex.find(it) }
       .map { it!!.destructured }
       .map { (x, y) -> Point(x.toInt(), y.toInt()) }
-      .windowed(2, 1) { it[0].drawStraightLineTo(it[1]) }
+      .windowed(2, 1) { it[0].fillPointsBetween(it[1]) }
       .flatten()
       .toSet()
   }.flatten()
@@ -69,7 +56,7 @@ fun parseRock(input: List<String>): Set<Point> =
 fun parseRockWithFloor(input: List<String>): Set<Point> {
   val rocks = parseRock(input)
   val floor = rocks.maxOf { it.y } + 2
-  return rocks union Point(500-floor, floor).drawStraightLineTo(Point(500+floor, floor))
+  return rocks union Point(500-floor, floor).fillPointsBetween(Point(500+floor, floor))
 }
 
 fun main() {
